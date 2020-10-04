@@ -14,6 +14,7 @@ class Transaction extends RestController {
     public function index_get()
     {
         $this->db->where('id_user', $this->get('id_user'));
+        $this->db->order_by('waktu_transaksi', 'desc');
         $query = $this->db->get('transactions');
         $transaction = $query->result_array();
 
