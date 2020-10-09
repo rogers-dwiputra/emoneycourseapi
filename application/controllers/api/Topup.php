@@ -11,7 +11,11 @@ class Topup extends RestController {
         parent::__construct();
     }
 
-    public function index_post()
+    public function index_post(){
+        
+    }
+
+    public function finish_post()
     {
         $this->db->insert('transactions',
             array(
