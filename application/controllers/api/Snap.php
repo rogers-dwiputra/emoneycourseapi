@@ -164,7 +164,7 @@ class Snap extends RestController {
 		echo 'OK';
 	}
 	
-	public function (){
+	public function transactionstatus_get(){
 		$order_id = $this->get('order_id');
 		$this->db->where('order_id', $order_id);
 		$query = $this->db->get('midtrans_order');
