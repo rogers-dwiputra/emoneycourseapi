@@ -121,43 +121,50 @@ class Snap extends RestController {
 
 		$midtransdata_array = json_decode($midtransdata, true);
 
-		if($midtransdata_array['transaction_status'] == 'settlement'){
-			$this->db->where('order_id', $midtransdata_array['order_id']);
-			$query = $this->db->get('midtrans_order');
-			$midtrans_order = $query->row_array();
+		$this->db->where('order_id', $midtransdata_array['order_id']);
+		$this->db->update('midtrans_order', array(
+			'va_number' => $midtransdata_array['va_numbers'][0]['va_number'],
+			'bank' => $midtransdata_array['va_numbers'][0]['bank'],
+			'transaction_status' => $midtransdata_array['transaction_status']
+		));
 
-			$this->db->insert('transactions',
-				array(
-				'id_user' => $midtrans_order['id_user'],
-				'waktu_transaksi' => date('Y-m-d H:i:s'),
-				'nominal_transaksi' => $midtrans_order['nominal_transaction'],
-				'berita_transaksi' => 'Top Up Melalui VA '.$midtransdata_array['va_numbers'][0]['bank'],
-				'jenis_transaksi' => 'kredit',
-				'latitude_transaksi' => $midtrans_order['latitude_transaksi'],
-				'longitude_transaksi' => $midtrans_order['longitude_transaksi'])
-			);
+		// if($midtransdata_array['transaction_status'] == 'settlement'){
+		// 	$this->db->where('order_id', $midtransdata_array['order_id']);
+		// 	$query = $this->db->get('midtrans_order');
+		// 	$midtrans_order = $query->row_array();
 
-			$this->db->where('id_user', $midtrans_order['id_user']);
-			$query = $this->db->get('users');
-			$user = $query->row_array();
+		// 	$this->db->insert('transactions',
+		// 		array(
+		// 		'id_user' => $midtrans_order['id_user'],
+		// 		'waktu_transaksi' => date('Y-m-d H:i:s'),
+		// 		'nominal_transaksi' => $midtrans_order['nominal_transaction'],
+		// 		'berita_transaksi' => 'Top Up Melalui VA '.$midtransdata_array['va_numbers'][0]['bank'],
+		// 		'jenis_transaksi' => 'kredit',
+		// 		'latitude_transaksi' => $midtrans_order['latitude_transaksi'],
+		// 		'longitude_transaksi' => $midtrans_order['longitude_transaksi'])
+		// 	);
 
-			$this->db->where('id_user', $midtrans_order['id_user']);
-			$this->db->update('users', array(
-				'saldo_user' => $user['saldo_user'] + $midtrans_order['nominal_transaction']
-			));
-		}
-		else {
-			$this->db->where('order_id', $midtransdata_array['order_id']);
-			$this->db->update('midtrans_order', array(
-				'va_number' => $midtransdata_array['va_numbers'][0]['va_number'],
-				'bank' => $midtransdata_array['va_numbers'][0]['bank']
-			));
-		}
+		// 	$this->db->where('id_user', $midtrans_order['id_user']);
+		// 	$query = $this->db->get('users');
+		// 	$user = $query->row_array();
+
+		// 	$this->db->where('id_user', $midtrans_order['id_user']);
+		// 	$this->db->update('users', array(
+		// 		'saldo_user' => $user['saldo_user'] + $midtrans_order['nominal_transaction']
+		// 	));
+		// }
+		// else {
+		// 	$this->db->where('order_id', $midtransdata_array['order_id']);
+		// 	$this->db->update('midtrans_order', array(
+		// 		'va_number' => $midtransdata_array['va_numbers'][0]['va_number'],
+		// 		'bank' => $midtransdata_array['va_numbers'][0]['bank']
+		// 	));
+		// }
 		
 		echo 'OK';
 	}
 	
-	public function transactionstatus_get(){
+	public function (){
 		$order_id = $this->get('order_id');
 		$this->db->where('order_id', $order_id);
 		$query = $this->db->get('midtrans_order');
