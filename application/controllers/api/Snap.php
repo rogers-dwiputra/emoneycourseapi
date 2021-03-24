@@ -23,7 +23,7 @@ class Snap extends RestController {
 	public function __construct()
     {
         parent::__construct();
-        $params = array('server_key' => , 'production' => false);
+        $params = array('server_key' => 'SB-Mid-server-CSOJn8FQBvXZjQCcRwlVZlsY', 'production' => false);
 		$this->load->library('midtrans');
 		$this->midtrans->config($params);
 		$this->load->helper('url');	
@@ -75,7 +75,10 @@ class Snap extends RestController {
 		$response = [
 			'status' => 'true',
 			'msg' => 'Success',
-			'redirect_url' => 'https://app.sandbox.midtrans.com/snap/v2/vtweb/'.$snapToken
+			'data' => array(
+				'redirect_url' => 'https://app.sandbox.midtrans.com/snap/v2/vtweb/'.$snapToken,
+				'order_id' => $order_id
+			)
 		];
 		$this->response($response, 200);
     }
@@ -106,7 +109,7 @@ class Snap extends RestController {
 		// $this->load->view('thankyou');
     }
 
-    public function notification_get(){
+    public function notification_post(){
 
 		$midtransdata = file_get_contents('php://input');
 
@@ -118,30 +121,58 @@ class Snap extends RestController {
 
 		$midtransdata_array = json_decode($midtransdata, true);
 
-		$this->db->where('order_id', $midtransdata_array['order_id']);
+		if($midtransdata_array['transaction_status'] == 'settlement'){
+			$this->db->where('order_id', $midtransdata_array['order_id']);
+			$query = $this->db->get('midtrans_order');
+			$midtrans_order = $query->row_array();
+
+			$this->db->insert('transactions',
+				array(
+				'id_user' => $midtrans_order['id_user'],
+				'waktu_transaksi' => date('Y-m-d H:i:s'),
+				'nominal_transaksi' => $midtrans_order['nominal_transaction'],
+				'berita_transaksi' => 'Top Up Melalui VA '.$midtransdata_array['va_numbers'][0]['bank'],
+				'jenis_transaksi' => 'kredit',
+				'latitude_transaksi' => $midtrans_order['latitude_transaksi'],
+				'longitude_transaksi' => $midtrans_order['longitude_transaksi'])
+			);
+
+			$this->db->where('id_user', $midtrans_order['id_user']);
+			$query = $this->db->get('users');
+			$user = $query->row_array();
+
+			$this->db->where('id_user', $midtrans_order['id_user']);
+			$this->db->update('users', array(
+				'saldo_user' => $user['saldo_user'] + $midtrans_order['nominal_transaction']
+			));
+		}
+		else {
+			$this->db->where('order_id', $midtransdata_array['order_id']);
+			$this->db->update('midtrans_order', array(
+				'va_number' => $midtransdata_array['va_numbers'][0]['va_number'],
+				'bank' => $midtransdata_array['va_numbers'][0]['bank']
+			));
+		}
+		
+		echo 'OK';
+	}
+	
+	public function transactionstatus_get(){
+		$order_id = $this->get('order_id');
+		$this->db->where('order_id', $order_id);
 		$query = $this->db->get('midtrans_order');
 		$midtrans_order = $query->row_array();
 
-		$this->db->insert('transactions',
-            array(
-            'id_user' => $midtrans_order['id_user'],
-            'waktu_transaksi' => date('Y-m-d H:i:s'),
-            'nominal_transaksi' => $midtrans_order['nominal_transaction'],
-            'berita_transaksi' => 'Top Up Melalui VA '.$midtransdata_array['va_numbers'][0]['bank'],
-            'jenis_transaksi' => 'kredit',
-            'latitude_transaksi' => $midtrans_order['latitude_transaksi'],
-            'longitude_transaksi' => $midtrans_order['longitude_transaksi'])
-		);
-
-		$this->db->where('id_user', $midtrans_order['id_user']);
-        $query = $this->db->get('users');
-        $user = $query->row_array();
-
-        $this->db->where('id_user', $midtrans_order['id_user']);
-        $this->db->update('users', array(
-            'saldo_user' => $user['saldo_user'] + $midtrans_order['nominal_transaction']
-        ));
-		
-		echo 'OK';
-    }
+		$response = [
+			'status' => 'true',
+			'msg' => 'Ok',
+			'data' => array(
+				'nominal_topup' => number_format($midtrans_order['nominal_transaction']),
+				'transaction_time' => date('d F Y H:i', strtotime($midtrans_order['midtrans_order_timestamp'])),
+				'bank' => $midtrans_order['bank'],
+				'va_number' => $midtrans_order['va_number']
+			)
+		];
+		$this->response($response, 200);
+	}
 }
