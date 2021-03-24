@@ -177,7 +177,8 @@ class Snap extends RestController {
 				'nominal_topup' => number_format($midtrans_order['nominal_transaction']),
 				'transaction_time' => date('d F Y H:i', strtotime($midtrans_order['midtrans_order_timestamp'])),
 				'bank' => $midtrans_order['bank'],
-				'va_number' => $midtrans_order['va_number']
+				'va_number' => $midtrans_order['va_number'],
+				'transaction_status' => $midtrans_order['transaction_status']
 			)
 		];
 		$this->response($response, 200);
