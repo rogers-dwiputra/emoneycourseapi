@@ -36,6 +36,10 @@ class Merchant extends RestController {
         $query = $this->db->get('merchants');
         $merchant = $query->row_array();
 
+        $this->db->where('id_user', $this->post('id_user'));
+        $query = $this->db->get('users');
+        $user = $query->row_array();
+
         $this->db->insert('transactions',
             array(
             'id_user' => $this->post('id_user'),
@@ -46,6 +50,11 @@ class Merchant extends RestController {
             'latitude_transaksi' => $this->post('latitude_transaksi'),
             'longitude_transaksi' => $this->post('longitude_transaksi'))
         );
+
+        $this->db->where('id_user', $this->post('id_user'));
+        $this->db->update('users', array(
+            'saldo_user' => $user['saldo_user'] - $this->post('nominal_bayar')
+        ));
 
         $this->response(array(
             'status' => 'true',
